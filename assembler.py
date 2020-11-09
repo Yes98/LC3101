@@ -1,5 +1,5 @@
 import sys
-
+import instructions 
 def twos(x):
     if x[0] == "-":
         temp = x[1:]
@@ -25,86 +25,7 @@ def twos(x):
             two[pos] = "0"
             pos -=1
     return "".join(two)
-    
 
-## R type
-class add:
-    opcode = "000"
-    def __init__(self,inst):
-        self.regA = "{0:b}".format(int(inst[0])).zfill(3)
-        self.regB = "{0:b}".format(int(inst[1])).zfill(3)
-        self.destReg =  "{0:b}".format(int(inst[2])).zfill(3)
-
-    def print(self):
-        return int(self.opcode+self.regA+self.regB+"0"*13+self.destReg,2)
-class nand:
-    opcode = "001"
-    def __init__(self,inst):
-        self.regA = "{0:b}".format(int(inst[0])).zfill(3)
-        self.regB = "{0:b}".format(int(inst[1])).zfill(3)
-        self.destReg =  "{0:b}".format(int(inst[2])).zfill(3)
-    def print(self):
-        return int(self.opcode+self.regA+self.regB+"0"*13+self.destReg,2)
-
-## I type
-class lw:
-    opcode = "010"
-    def __init__(self,inst):
-        self.regA = "{0:b}".format(int(inst[0])).zfill(3)
-        self.regB = "{0:b}".format(int(inst[1])).zfill(3)
-        self.offsetField =  twos("{0:b}".format(int(inst[2]))).zfill(16)
-    def print(self):
-        return int(self.opcode+self.regA+self.regB+self.offsetField,2)
-
-class sw:
-    opcode = "011"
-    def __init__(self,inst):
-        self.regA = "{0:b}".format(int(inst[0])).zfill(3)
-        self.regB = "{0:b}".format(int(inst[1])).zfill(3)
-        self.offsetField =  twos("{0:b}".format(int(inst[2]))).zfill(16)
-    def print(self):
-        return int(self.opcode+self.regA+self.regB+self.offsetField,2)
-class beq:
-    opcode = "100"
-    def __init__(self,inst):
-        self.regA = "{0:b}".format(int(inst[0])).zfill(3)
-        self.regB = "{0:b}".format(int(inst[1])).zfill(3)
-        self.offsetField =  twos("{0:b}".format(int(inst[2]))).zfill(16)
-    def print(self):
-        return int(self.opcode+self.regA+self.regB+self.offsetField,2)
-## J type
-class jalr:
-    opcode = "101"
-    def __init__(self,inst):
-        self.regA = "{0:b}".format(int(inst[0])).zfill(3)
-        self.regB = "{0:b}".format(int(inst[1])).zfill(3)
-    def print(self):
-        return int(self.opcode+self.regA+self.regB+"0"*16)
-        
-        
-## O type
-class halt:
-    opcode = "110"
-    def __init__(self,v):
-        pass
-    def print(self):
-        return int(self.opcode+"0"*22,2)
-
-class noop:
-    opcode = "111"
-    def __init__(self,v):
-        pass
-    def print(self):
-        return int(self.opcode+"0"*22,2)
-
-class fill:
-    def __init__(self,v):
-        self.value = v
-    def print(self):
-        return int(self.value)
-instructions = {"add":add,"nand":nand,"lw":lw,
-                "sw":sw,"beq":beq,"jalr":jalr}
-smallInts = {"halt":halt,"noop":noop,".fill":fill}
 
 if __name__ == "__main__":
     whiteSpaces = ['\t',' ']
@@ -114,7 +35,7 @@ if __name__ == "__main__":
         exit(1)
 
     assembleCode = open(sys.argv[1]).readlines()
-    
+    outputCode = open(sys.argv[2],'w')
     symbolicAddress = {}
     inst = []
     order = []
@@ -133,34 +54,48 @@ if __name__ == "__main__":
             inst.append(temp[1:])
 
     ## need to add check for offsets
+    ## fix symbolic address
+    memlock = 0
     for line in inst:
         if line[0][-1] == '\n':
             line[0] = line[0][:-1]
-        if line[0] in instructions:
+        if line[0] in instructions.instructions:
             vals = []
             for i in line[1:]:
-                if i.isnumeric():
+                try:
+                    int(i)
+                    dig = True
+                except:
+                    dig = False
+                if dig:
                     vals.append(i)
                 elif i in symbolicAddress:
-                    vals.append(symbolicAddress[i])
+                    if line[0] == "beq" or line[0] == "jalr":
+                        vals.append(symbolicAddress[i]-memlock-1)
+                        
+                    else:
+                        vals.append(symbolicAddress[i])
+                    
                 else:
                     ## unidentified label
+                    outputCode.write(i+'\n')
                     print(i)
                     exit(1)
-            order.append(instructions[line[0]](vals))
-        elif line[0] in smallInts: 
+            order.append(instructions.instructions[line[0]](vals))
+        elif line[0] in instructions.smallInts: 
             val = 0
 
             if len(line) > 1 and line[1] in symbolicAddress:
                val = symbolicAddress[line[1]]
             elif len(line)>1:
                 val = line[1]
-            order.append(smallInts[line[0]](val))
+            order.append(instructions.smallInts[line[0]](val))
         else:
             print(line)
             exit(1)
-            
+        memlock +=1
     for i in order:
+        outputCode.write(str(i.print())+'\n')
         print(i.print())
 
 
