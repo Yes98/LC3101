@@ -1,11 +1,18 @@
 import instructions as inst
 import sys 
+
+
+
+
 class stateStruct:
     def __init__(self, nm):
         self.pc = 0
         self.mem =[0]*65536
         self.reg = [0]*8
         self.numMemory = nm
+      
+
+
 
 
 def printState(state):

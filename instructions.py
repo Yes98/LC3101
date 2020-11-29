@@ -50,6 +50,7 @@ def twos(x):
 
 ## R type
 class add:
+    title = "add"
     opcode = "000"
     def __init__(self,inst,dec=0):
         if(dec):
@@ -60,14 +61,18 @@ class add:
             self.regA = "{0:b}".format(int(inst[0])).zfill(3)
             self.regB = "{0:b}".format(int(inst[1])).zfill(3)
             self.destReg =  "{0:b}".format(int(inst[2])).zfill(3)
-    def print(self):
+    def Print(self):
         return int("0"*7+self.opcode+self.regA+self.regB+"0"*13+self.destReg,2)
+    def instPrint(self):
+        return " "+title+" "+self.regA+" "+self.regB+" "+self.destReg
     def execute(self,state):
         state.pc+=1
+        print(state.reg[self.regA] + state.reg[self.regB])
         state.reg[self.destReg] = state.reg[self.regA] + state.reg[self.regB]
         return True
     
 class nand:
+    title = "nand"
     opcode = "001"
     def __init__(self,inst,dec=0):
         if(dec):
@@ -78,15 +83,19 @@ class nand:
             self.regA = "{0:b}".format(int(inst[0])).zfill(3)
             self.regB = "{0:b}".format(int(inst[1])).zfill(3)
             self.destReg =  "{0:b}".format(int(inst[2])).zfill(3)
-    def print(self):
+    def Print(self):
         return int("0"*7+self.opcode+self.regA+self.regB+"0"*13+self.destReg,2)
+    def instPrint(self):
+        return " "+title+" "+self.regA+" "+self.regB+" "+self.destReg
     def execute(self,state):
         state.pc+=1
         #### this may be an issue
         state.reg[self.destReg] = ~(state.reg[self.regA] & state.reg[self.regB])
         return True
+
 ## I type
 class lw:
+    title = "lw"
     opcode = "010"
     def __init__(self,inst,dec=0):
         if(dec):
@@ -99,15 +108,19 @@ class lw:
             self.regA = "{0:b}".format(int(inst[0])).zfill(3)
             self.regB = "{0:b}".format(int(inst[1])).zfill(3)
             self.offsetField =  twos("{0:b}".format(int(inst[2]))).zfill(16)
-    def print(self):
+    def Print(self):
         return int("0"*7+self.opcode+self.regA+self.regB+self.offsetField,2)
+    def instPrint(self):
+        return " "+title+" "+self.regA+" "+self.regB+" "+self.offsetField
     def execute (self,state):
         state.pc+=1
-        print(self.offsetField + state.reg[self.regA])
+        print(self.offsetField)
+        print(state.reg[self.regA])
         state.reg[self.regB] = state.mem[self.offsetField + state.reg[self.regA]]
         return True
 
 class sw:
+    title = "sw"
     opcode = "011"
     def __init__(self,inst,dec=0):
         if(dec):
@@ -118,14 +131,17 @@ class sw:
             self.regA = "{0:b}".format(int(inst[0])).zfill(3)
             self.regB = "{0:b}".format(int(inst[1])).zfill(3)
             self.offsetField =  twos("{0:b}".format(int(inst[2]))).zfill(16)
-    def print(self):
+    def Print(self):
         return int("0"*7+self.opcode+self.regA+self.regB+self.offsetField,2)
+    def instPrint(self):
+        return " "+title+" "+self.regA+" "+self.regB+" "+self.offsetField
     def execute(self,state):
         state.pc+=1
         state.mem[self.regA + self.offsetField] = state.reg[self.regB]
         return True
 
 class beq:
+    title = "beq"
     opcode = "100"
     def __init__(self,inst,dec=0):
         if(dec):
@@ -137,13 +153,14 @@ class beq:
             self.regA = "{0:b}".format(int(inst[0])).zfill(3)
             self.regB = "{0:b}".format(int(inst[1])).zfill(3)
             self.offsetField =  twos("{0:b}".format(int(inst[2])))
-    def print(self):
-        
+    def Print(self):
         return int("0"*7+self.opcode+self.regA+self.regB+self.offsetField,2)
+
+    def instPrint(self):
+        return " "+title+" "+self.regA+" "+self.regB+" "+self.offsetField
+
     def execute(self,state):
-        
         if(state.reg[self.regA] == state.reg[self.regB]):
-            print(self.offsetField)
             state.pc = state.pc+1+ self.offsetField
         else:
             state.pc +=1
@@ -151,29 +168,39 @@ class beq:
 
 ## J type
 class jalr:
+    title = "jalr"
     opcode = "101"
-    def __init__(self,inst,dec=1):
-        if(dec):
-            
+    def __init__(self,inst,dec=0):
+        if(dec):            
             self.regA = int(inst[:3],2)
             self.regB = int(inst[3:6],2)
         else:
             self.regA = "{0:b}".format(int(inst[0])).zfill(3)
             self.regB = "{0:b}".format(int(inst[1])).zfill(3)
-    def print(self):
-        return int("0"*7+self.opcode+self.regA+self.regB+"0"*16)
+
+    def Print(self):
+        return int("0"*7+self.opcode+self.regA+self.regB+"0"*16,2)
+
+    def instPrint(self):
+        return " "+title+" "+self.regA+" "+self.regB
+    
     def execute(self,state):
-        self.regB = state.pc +1
-        state.pc = self.regA
+        state.reg[self.regB] = state.pc +1
+        state.pc = state.reg[self.regA]
         return True
         
 ## O type
 class halt:
+    title = "halt"
     opcode = "110"
     def __init__(self,v,dec=0):
         pass
-    def print(self):
+    def Print(self):
         return int("0"*7+self.opcode+"0"*22,2)
+
+    def instPrint(self):
+        return " "+title+" 0 0 0"
+
     def execute(self,state):
         state.pc +=1
         return False
@@ -181,11 +208,14 @@ class halt:
 
 
 class noop:
+    title = "noop"
     opcode = "111"
     def __init__(self,v,dec=0):
         pass
-    def print(self):
+    def Print(self):
         return int("0"*7+self.opcode+"0"*22,2)
+    def instPrint(self):
+        return " "+title+" 0 0 0"
     def execute(self,state):
         state.pc +=1
         return True
@@ -194,7 +224,7 @@ class fill:
     opcode = ""
     def __init__(self,v):
         self.value = v
-    def print(self):
+    def Print(self):
         return int(self.value)
 
 opcodes = {"000":add,"001":nand,"010":lw,

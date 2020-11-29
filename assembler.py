@@ -57,6 +57,7 @@ if __name__ == "__main__":
     ## fix symbolic address
     memlock = 0
     for line in inst:
+       ## print(line)
         if line[0][-1] == '\n':
             line[0] = line[0][:-1]
         if line[0] in instructions.instructions:
@@ -79,8 +80,11 @@ if __name__ == "__main__":
                 else:
                     ## unidentified label
                     outputCode.write(i+'\n')
-                    print(i)
+                    print(line)
+                    print(i+"SDS")
                     exit(1)
+           
+            print(line)
             order.append(instructions.instructions[line[0]](vals))
         elif line[0] in instructions.smallInts: 
             val = 0
@@ -91,12 +95,13 @@ if __name__ == "__main__":
                 val = line[1]
             order.append(instructions.smallInts[line[0]](val))
         else:
-            print(line)
+            print(line+"DS")
             exit(1)
         memlock +=1
     for i in order:
-        outputCode.write(str(i.print())+'\n')
-        print(i.print())
+        print("hello")
+        outputCode.write(str(i.Print())+'\n')
+        print(i.Print())
 
 
         
